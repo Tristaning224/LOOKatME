@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Product Ops & Maker · 个人空间</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --surface: rgba(16, 20, 30, 0.86);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --cyan: #38bdf8;
+      --indigo: #818cf8;
+      --orange: #fb923c;
+      --amber: #fbbf24;
+      --emerald: #34d399;
+      --violet: #c084fc;
+      --rose: #fb7185;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 18px 16px 76px;
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .ambient-glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .glow-orb { position: absolute; border-radius: 50%; filter: blur(115px); opacity: 0.15; }
+    .orb-1 { width: 520px; height: 420px; background: #38bdf8; top: -140px; left: -80px; }
+    .orb-2 { width: 480px; height: 420px; background: #a855f7; top: 80px; right: -120px; opacity: 0.12; }
+    .orb-3 { width: 520px; height: 420px; background: #f97316; bottom: -140px; left: 25%; opacity: 0.11; }
+
+    .container { max-width: 960px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* 顶部导航 */
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .nav-tabs {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: 99px;
+      gap: 4px;
+      overflow-x: auto;
+      max-width: 100%;
+      scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 7px 14px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn.active { background: rgba(255, 255, 255, 0.14); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+    .nav-btn.nav-private { color: var(--amber); }
+    .nav-btn.nav-private.active { background: rgba(251, 191, 36, 0.18); color: var(--amber); }
+
+    .auth-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .write-entry-btn {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #fff;
+      border: none;
+      padding: 7px 15px;
+      border-radius: 99px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 3px 12px rgba(56, 189, 248, 0.25);
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .write-entry-btn:hover { transform: translateY(-1px); opacity: 0.94; }
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pill-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .pill-btn.unlocked { border-color: rgba(52, 211, 153, 0.4); color: var(--emerald); background: rgba(52, 211, 153, 0.08); }
+    .sync-status { font-size: 12px; color: var(--muted); }
+
+    /* 快速发布抽屉 */
+    .quick-composer {
+      display: none;
+      background: linear-gradient(145deg, rgba(20, 28, 46, 0.96), rgba(14, 18, 28, 0.98));
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      border-radius: 20px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.2s ease;
+    }
+    .quick-composer.open { display: block; }
+    .qc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .qc-title { font-size: 15px; font-weight: 700; color: var(--cyan); }
+    .qc-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 2px 6px; }
+    .qc-close:hover { color: #fff; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; background: rgba(8, 11, 18, 0.78); border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 9px; padding: 9px 12px; color: #fff; font-size: 13.5px; font-family: inherit;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+      outline: none; border-color: var(--cyan);
+    }
+    .qc-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+
+    /* 主名片 */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(22, 28, 44, 0.9) 0%, rgba(16, 18, 28, 0.92) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      padding: 24px 26px;
+      margin-bottom: 26px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--orange), var(--emerald));
+    }
+    .hero-layout { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .hero-left { flex: 1; min-width: 260px; }
+    .hero-identity { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .avatar-ring {
+      width: 56px; height: 56px; border-radius: 17px; padding: 2px;
+      background: linear-gradient(135deg, var(--cyan), var(--orange)); flex-shrink: 0;
+    }
+    .avatar-inner {
+      width: 100%; height: 100%; border-radius: 15px; background: #101522;
+      display: flex; align-items: center; justify-content: center; font-size: 25px;
+    }
+    .hero-name { font-size: 22px; font-weight: 800; }
+    .role-badge {
+      display: inline-block; margin-top: 4px;
+      font-size: 11.5px; font-weight: 700; padding: 2px 10px; border-radius: 99px;
+      background: rgba(56, 189, 248, 0.14); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .hero-bio { font-size: 15px; color: #e5e7eb; line-height: 1.75; }
+
+    .hero-right {
+      display: flex; flex-direction: column; gap: 8px; min-width: 220px;
+      background: rgba(255, 255, 255, 0.035); border: 1px solid var(--border);
+      padding: 14px 16px; border-radius: 14px; font-size: 12.5px;
+    }
+    .stat-row { display: flex; justify-content: space-between; gap: 10px; }
+    .stat-label { color: var(--muted); }
+    .stat-val { font-weight: 600; color: #fff; text-align: right; }
+
+    /* 分区 */
+    .zone-section { margin-bottom: 32px; }
+    .zone-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08); gap: 10px; flex-wrap: wrap;
+    }
+    .zone-title-wrap { display: flex; align-items: center; gap: 10px; }
+    .zone-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+    }
+    .num-work { background: rgba(56, 189, 248, 0.15); color: var(--cyan); }
+    .num-life { background: rgba(251, 146, 60, 0.15); color: var(--orange); }
+    .num-private { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+    .zone-title { font-size: 17px; font-weight: 700; }
+
+    .more-link {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text); font-size: 12px; font-weight: 600; padding: 5px 12px;
+      border-radius: 99px; cursor: pointer; transition: all 0.2s;
+    }
+    .more-link:hover { background: rgba(255,255,255,0.12); border-color: var(--cyan); }
+
+    .cards-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .cards-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .cards-stack { display: flex; flex-direction: column; gap: 12px; }
+
+    .b-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px 20px; position: relative;
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .b-card:hover { transform: translateY(-2px); }
+
+    .tone-maker { background: linear-gradient(155deg, rgba(14, 46, 72, 0.52) 0%, rgba(15, 20, 32, 0.92) 75%); border-color: rgba(56, 189, 248, 0.24); }
+    .tone-maker:hover { border-color: rgba(56, 189, 248, 0.58); box-shadow: 0 8px 24px rgba(56, 189, 248, 0.1); }
+    .tone-ops { background: linear-gradient(155deg, rgba(40, 38, 88, 0.5) 0%, rgba(15, 20, 32, 0.92) 75%); border-color: rgba(129, 140, 248, 0.24); }
+    .tone-ops:hover { border-color: rgba(129, 140, 248, 0.58); }
+    .tone-ai { background: linear-gradient(155deg, rgba(16, 54, 62, 0.5) 0%, rgba(15, 20, 32, 0.92) 75%); border-color: rgba(45, 212, 191, 0.24); }
+    .tone-ai:hover { border-color: rgba(45, 212, 191, 0.58); }
+
+    .tone-snow { background: linear-gradient(155deg, rgba(16, 48, 72, 0.55) 0%, rgba(44, 24, 16, 0.45) 100%); border-color: rgba(251, 146, 60, 0.28); }
+    .tone-snow:hover { border-color: rgba(251, 146, 60, 0.6); }
+    .tone-guqin { background: linear-gradient(155deg, rgba(66, 42, 16, 0.52) 0%, rgba(20, 18, 16, 0.92) 75%); border-color: rgba(251, 191, 36, 0.26); }
+    .tone-guqin:hover { border-color: rgba(251, 191, 36, 0.58); }
+    .tone-fitness { background: linear-gradient(155deg, rgba(12, 56, 44, 0.52) 0%, rgba(14, 20, 24, 0.92) 75%); border-color: rgba(52, 211, 153, 0.25); }
+    .tone-fitness:hover { border-color: rgba(52, 211, 153, 0.58); }
+    .tone-thought { background: linear-gradient(155deg, rgba(52, 26, 74, 0.48) 0%, rgba(16, 18, 30, 0.92) 75%); border-color: rgba(192, 132, 252, 0.26); }
+    .tone-thought:hover { border-color: rgba(192, 132, 252, 0.58); }
+
+    .tone-private { background: linear-gradient(155deg, rgba(46, 28, 22, 0.52) 0%, rgba(18, 15, 22, 0.94) 75%); border-color: rgba(251, 191, 36, 0.24); }
+
+    .card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cat-pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; background: rgba(255,255,255,0.08); }
+    .date-text { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .card-title { font-size: 15.5px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .card-desc { font-size: 13.5px; color: #cbd5e1; opacity: 0.9; white-space: pre-wrap; }
+    .card-foot {
+      margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.09);
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px; gap: 8px;
+    }
+    .tag-muted { color: var(--muted); }
+    .card-link { color: var(--cyan); text-decoration: none; font-weight: 600; }
+    .card-link:hover { text-decoration: underline; }
+
+    .card-admin-btns { display: none; gap: 10px; }
+    body.is-admin .card-admin-btns { display: inline-flex; }
+    .btn-card-op { background: none; border: none; color: #9ca3af; font-size: 12px; cursor: pointer; }
+    .btn-card-op:hover { color: var(--cyan); }
+    .btn-card-op.del:hover { color: var(--rose); }
+
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-chip {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted);
+      padding: 5px 12px; border-radius: 99px; font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+    }
+    .filter-chip.active { background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.28); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #6366f1); color: #fff; border: none;
+      padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-warm { background: linear-gradient(135deg, #ea580c, #d97706); }
+
+    .btn-edit-profile {
+      display: none; margin-top: 12px; background: rgba(56, 189, 248, 0.14);
+      color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 5px 13px; border-radius: 99px; font-size: 12px; cursor: pointer;
+    }
+    body.is-admin .btn-edit-profile { display: inline-block; }
+
+    /* 私密区能量账本 */
+    .energy-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .energy-box {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px 18px;
+    }
+    .energy-box.good { border-top: 3px solid var(--emerald); }
+    .energy-box.bad { border-top: 3px solid var(--rose); }
+    .energy-box h4 { font-size: 14px; margin-bottom: 10px; }
+    .energy-box.good h4 { color: var(--emerald); }
+    .energy-box.bad h4 { color: var(--rose); }
+    .energy-list { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+    .energy-list li {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.03); padding: 7px 10px; border-radius: 8px;
+    }
+    .energy-add-row { display: flex; gap: 6px; margin-top: 10px; }
+    .energy-add-row input {
+      flex: 1; background: rgba(8, 11, 18, 0.7); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px; padding: 7px 10px; color: #fff; font-size: 13px;
+    }
+
+    /* 弹窗 */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(4, 6, 12, 0.72); backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100;
+    }
+    .modal-mask.open { display: flex; }
+    .modal-box {
+      background: #121622; border: 1px solid rgba(255,255,255,0.14); width: 100%; max-width: 440px;
+      border-radius: 16px; padding: 22px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .modal-desc { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .modal-field input, .modal-field select, .modal-field textarea {
+      width: 100%; background: #090c14; border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 14px; font-family: inherit;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .btn-ghost {
+      background: rgba(255,255,255,0.08); color: var(--text); border: none;
+      padding: 8px 15px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    }
+    .backup-row {
+      margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted);
+    }
+
+    .page-view { display: none; animation: fadeIn 0.22s ease; }
+    .page-view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 780px) {
+      .cards-grid-3, .cards-grid-2, .form-grid, .energy-cols { grid-template-columns: 1fr; }
+      .hero-right { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ambient-glow">
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+</div>
+
+<div class="container">
+  <!-- 顶部导航 -->
+  <div class="top-nav">
+    <div class="nav-tabs" id="navTabs">
+      <button class="nav-btn active" data-page="home">🏠 首页</button>
+      <button class="nav-btn" data-page="work">💼 工作与创造</button>
+      <button class="nav-btn" data-page="life">🌿 热爱与生活</button>
+      <button class="nav-btn nav-private" data-page="private" id="navPrivateBtn" style="display:none;">⚓ 私密探索</button>
+    </div>
+    <div class="auth-controls">
+      <span class="sync-status" id="syncStatus"></span>
+      <button class="pill-btn" id="refreshBtn" title="拉取云端与Hermes最新写入" style="display:none;">🔄 同步</button>
+      <button class="write-entry-btn" id="openComposerBtn">✍️ 发布新内容</button>
+      <button class="pill-btn" id="authBtn">🔒 主人登录</button>
+    </div>
+  </div>
+
+  <!-- 快速发布抽屉 -->
+  <div class="quick-composer" id="quickComposer">
+    <div class="qc-header">
+      <span class="qc-title">✍️ 往个人空间写一条新内容</span>
+      <button class="qc-close" id="closeComposerBtn">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>发布到哪个板块？</label>
+        <select id="cTarget">
+          <option value="work">💼 01 / 工作与创造（公开）</option>
+          <option value="life">🌿 02 / 热爱与生活（公开）</option>
+          <option value="private">⚓ 03 / 私密探索（仅自己可见）</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>小分类</label>
+        <select id="cCat"></select>
+      </div>
+      <div class="form-field">
+        <label id="cBadgeLabel">状态 / 小标签</label>
+        <input type="text" id="cBadge" placeholder="例如：已上线 / 实验中" />
+      </div>
+    </div>
+    <div class="form-grid" style="grid-template-columns: 2fr 1fr;" id="cTitleRow">
+      <div class="form-field">
+        <label>标题</label>
+        <input type="text" id="cTitle" placeholder="一句话概括这件事..." />
+      </div>
+      <div class="form-field" id="cLinkWrap">
+        <label>外部链接（可选）</label>
+        <input type="text" id="cLink" placeholder="https://..." />
+      </div>
+    </div>
+    <div class="form-field">
+      <label>详细内容</label>
+      <textarea id="cDesc" rows="3" placeholder="写下具体做了什么、收获或感悟..."></textarea>
+    </div>
+    <div class="qc-actions">
+      <button class="btn-ghost" id="cancelComposerBtn">收起</button>
+      <button class="btn-primary" id="publishBtn">发布并同步到云端</button>
+    </div>
+  </div>
+
+  <!-- ================= 页面 1：首页概览（仅展示最新 3 项） ================= -->
+  <div class="page-view active" id="page-home">
+    <div class="hero-card">
+      <div class="hero-layout">
+        <div class="hero-left">
+          <div class="hero-identity">
+            <div class="avatar-ring"><div class="avatar-inner">🏂</div></div>
+            <div>
+              <div class="hero-name" id="pName"></div>
+              <span class="role-badge" id="pRole"></span>
+            </div>
+          </div>
+          <p class="hero-bio" id="pBio"></p>
+          <button class="btn-edit-profile" id="editProfileBtn">✏️ 修改名片与此刻状态</button>
+        </div>
+        <div class="hero-right">
+          <div class="stat-row"><span class="stat-label">📍 此刻状态</span><span class="stat-val" style="color:var(--emerald);" id="pNow"></span></div>
+          <div class="stat-row"><span class="stat-label">💼 工作领域</span><span class="stat-val" style="color:var(--cyan);">产品运营 · AI · 网页</span></div>
+          <div class="stat-row"><span class="stat-label">🌿 生活切片</span><span class="stat-val" style="color:var(--orange);">滑雪 · 古琴 · 健身</span></div>
+          <div class="stat-row"><span class="stat-label">📮 联系我</span><span class="stat-val" id="pEmail"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="zone-section">
+      <div class="zone-header">
+        <div class="zone-title-wrap">
+          <span class="zone-num num-work">01 / WORK & MAKER</span>
+          <h2 class="zone-title">工作与创造 · 最新 3 项</h2>
+        </div>
+        <button class="more-link" id="goWorkBtn">查看全部 →</button>
+      </div>
+      <div class="cards-grid-3" id="homeWorkGrid"></div>
+    </section>
+
+    <section class="zone-section">
+      <div class="zone-header">
+        <div class="zone-title-wrap">
+          <span class="zone-num num-life">02 / LIFE & ADVENTURE</span>
+          <h2 class="zone-title">热爱与生活 · 最新 3 项</h2>
+        </div>
+        <button class="more-link" id="goLifeBtn">查看全部 →</button>
+      </div>
+      <div class="cards-grid-3" id="homeLifeGrid"></div>
+    </section>
+  </div>
+
+  <!-- ================= 页面 2：工作与创造详情页 ================= -->
+  <div class="page-view" id="page-work">
+    <div class="zone-header">
+      <div class="zone-title-wrap">
+        <span class="zone-num num-work">WORK & MAKER</span>
+        <h2 class="zone-title">工作、AI 研究与小作品完整档案</h2>
+      </div>
+      <span class="sync-status" id="workCount"></span>
+    </div>
+    <div class="filter-bar" id="workFilterBar">
+      <button class="filter-chip active" data-cat="all">全部</button>
+      <button class="filter-chip" data-cat="maker">🛠️ Maker 小作品</button>
+      <button class="filter-chip" data-cat="ops">🌉 产品运营</button>
+      <button class="filter-chip" data-cat="ai">🤖 AI 工具研究</button>
+    </div>
+    <div class="cards-grid-2" id="workFullGrid"></div>
+  </div>
+
+  <!-- ================= 页面 3：热爱与生活详情页 ================= -->
+  <div class="page-view" id="page-life">
+    <div class="zone-header">
+      <div class="zone-title-wrap">
+        <span class="zone-num num-life">LIFE & ADVENTURE</span>
+        <h2 class="zone-title">滑雪 · 古琴 · 健身 · 冒险完整记录</h2>
+      </div>
+      <span class="sync-status" id="lifeCount"></span>
+    </div>
+    <div class="filter-bar" id="lifeFilterBar">
+      <button class="filter-chip active" data-cat="all">全部</button>
+      <button class="filter-chip" data-cat="snow">🏂 单板滑雪</button>
+      <button class="filter-chip" data-cat="guqin">🪵 古琴</button>
+      <button class="filter-chip" data-cat="fitness">💪 健身</button>
+      <button class="filter-chip" data-cat="thought">🏔️ 冒险随想</button>
+    </div>
+    <div class="cards-grid-2" id="lifeFullGrid"></div>
+  </div>
+
+  <!-- ================= 页面 4：海面下私密探索页 ================= -->
+  <div class="page-view" id="page-private">
+    <div class="zone-header">
+      <div class="zone-title-wrap">
+        <span class="zone-num num-private">PRIVATE SELF</span>
+        <h2 class="zone-title">海面之下 · 自我剖析与私密复盘</h2>
+      </div>
+      <span class="sync-status">🔒 仅输入密码后从云端读取，访客不可见</span>
+    </div>
+
+    <div class="energy-cols">
+      <div class="energy-box good">
+        <h4>🔋 让我越干越精神的事（好）</h4>
+        <ul class="energy-list" id="goodList"></ul>
+        <div class="energy-add-row">
+          <input type="text" id="inGood" placeholder="新增一条充电项..." />
+          <button class="btn-primary" id="addGoodBtn" style="padding:6px 12px;">+</button>
+        </div>
+      </div>
+      <div class="energy-box bad">
+        <h4>🪫 让我迅速耗电的事（不好）</h4>
+        <ul class="energy-list" id="badList"></ul>
+        <div class="energy-add-row">
+          <input type="text" id="inBad" placeholder="新增一条耗电项..." />
+          <button class="btn-primary btn-warm" id="addBadBtn" style="padding:6px 12px;">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards-stack" id="privateLogsStack"></div>
+  </div>
+</div>
+
+<!-- 密码弹窗 -->
+<div class="modal-mask" id="authModal">
+  <div class="modal-box">
+    <div class="modal-title">🔑 输入 Cloudflare 同步密码</div>
+    <div class="modal-desc">输入你在 Cloudflare Worker 中设定的私人密码（与 Hermes 相同）。解锁后可在线发布、修改内容并打开私密区。</div>
+    <div class="modal-field">
+      <label>私人密码</label>
+      <input type="password" id="cfgPwd" placeholder="输入同步密码" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="logoutBtn" style="margin-right:auto;color:var(--rose);display:none;">退出编辑锁定</button>
+      <button class="btn-ghost" id="closeAuthBtn">取消</button>
+      <button class="btn-primary" id="confirmAuthBtn">解锁并同步</button>
+    </div>
+    <div class="backup-row">
+      <span>本地备份：</span>
+      <div>
+        <button class="btn-ghost" id="exportBtn" style="padding:4px 10px;font-size:12px;">导出 JSON</button>
+        <button class="btn-ghost" id="importBtn" style="padding:4px 10px;font-size:12px;">导入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑名片弹窗 -->
+<div class="modal-mask" id="profileModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ 修改首页名片与此刻状态</div>
+    <div class="modal-field"><label>名字 / 昵称</label><input type="text" id="edName" /></div>
+    <div class="modal-field"><label>对外职业头衔</label><input type="text" id="edRole" /></div>
+    <div class="modal-field"><label>核心简介</label><textarea id="edBio" rows="3"></textarea></div>
+    <div class="modal-field"><label>此刻状态（Now）</label><input type="text" id="edNow" /></div>
+    <div class="modal-field"><label>联系邮箱</label><input type="text" id="edEmail" /></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeProfileBtn">取消</button>
+      <button class="btn-primary" id="saveProfileBtn">保存并同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- 修改单条卡片弹窗 -->
+<div class="modal-mask" id="editItemModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ 修改这条记录</div>
+    <div class="modal-field"><label>标题</label><input type="text" id="eiTitle" /></div>
+    <div class="modal-field" id="eiBadgeWrap"><label id="eiBadgeLabel">状态 / 标签</label><input type="text" id="eiBadge" /></div>
+    <div class="modal-field" id="eiLinkWrap"><label>外部链接（可选）</label><input type="text" id="eiLink" /></div>
+    <div class="modal-field"><label>详细内容</label><textarea id="eiDesc" rows="3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="closeEditItemBtn">取消</button>
+      <button class="btn-primary" id="saveEditItemBtn">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const WORKER_BASE = 'https://my-sync.ningtrista.workers.dev';
+  const PUB_LOCAL_KEY = 'homepage_pub_cloud_v3';
+  const PRI_LOCAL_KEY = 'homepage_pri_cloud_v3';
+  const PWD_KEY = 'homepage_admin_pwd_v3';
+  const HOME_LIMIT = 3;
+
+  const defaultPublic = {
+    isDefault: true,
+    updatedAt: 0,
+    profileUpdatedAt: 0,
+    deletedIds: [],
+    profile: {
+      name: '你的名字 / 昵称',
+      role: 'Product Ops & Maker',
+      bio: '平日职业是 Product Ops & Maker，替用户和产品搭桥，研究些 AI 工具；其余时间滑雪、古琴、健身，也顺手写点好玩的小网页。',
+      nowText: '打磨个人空间 & 备战雪季',
+      email: 'hi@example.com'
+    },
+    workItems: [
+      { id: 'w4', createdAt: 4000, date: '2026-11', category: 'ai', title: 'Hermes × 云端个人空间联动', status: '已打通', desc: '通过 Hermes Agent 的 Skill 直接读写 Cloudflare Worker，聊天就能更新个人主页与项目手账。', link: '' },
+      { id: 'w3', createdAt: 3000, date: '2026-11', category: 'maker', title: '美瑛雪镇项目断点手账', status: '已上线', desc: '单文件 HTML + Cloudflare Workers 搭出的多端云同步工具，解决主业太忙忘记进度的痛点。', link: '' },
+      { id: 'w2', createdAt: 2000, date: '2026-10', category: 'ops', title: '让产品真正“活起来”', status: '方法论', desc: '工程师把功能造出来，设计师给它美感，而我负责替产品和真实的用户搭桥，构建增长与体验闭环。', link: '' },
+      { id: 'w1', createdAt: 1000, date: '2026-09', category: 'ai', title: 'AI 轻量化运营工作流', status: '实践中', desc: '用 AI 工具拆解繁杂需求、做数据洞察与快速交互原型，把个人想法直接落地。', link: '' }
+    ],
+    lifeItems: [
+      { id: 'l4', createdAt: 4000, date: '2026-11', category: 'thought', title: '偏爱有挑战的未知领域', tag: '冒险感', desc: '不喜欢一成不变的安全区，喜欢自己一点点摸索新领域、解锁新技能的过程。' },
+      { id: 'l3', createdAt: 3000, date: '2026-11', category: 'snow', title: '单板滑雪与美瑛厚雪', tag: '动 · 户外冒险', desc: '偏爱雪道上自由呼啸的失重感，也沉迷北海道美瑛那种安静治愈的厚雪风景。' },
+      { id: 'l2', createdAt: 2000, date: '2026-10', category: 'guqin', title: '七弦上的东方静气', tag: '静 · 古琴', desc: '在快节奏和屏幕之外，靠弹古琴留住一段慢呼吸的时间，让心思瞬间沉静。' },
+      { id: 'l1', createdAt: 1000, date: '2026-09', category: 'fitness', title: '规律力量训练', tag: '恒 · 身体自律', desc: '保持体能和身体的掌控感，是支撑所有职场高压与户外冒险的底座。' }
+    ]
+  };
+
+  const defaultPrivate = {
+    isDefault: true,
+    updatedAt: 0,
+    energyUpdatedAt: 0,
+    deletedIds: [],
+    energyGood: [
+      '从 0 到 1 亲手做出一个能用的小网页',
+      '把一团乱麻的问题理出清晰结构',
+      '在雪道和健身房突破身体小极限'
+    ],
+    energyBad: [
+      '没有实际产出的冗长扯皮会议',
+      '被迫迎合、违背直觉的无效社交',
+      '被琐事打断太久导致手头项目断档'
+    ],
+    privateLogs: [
+      {
+        id: 'pr1', createdAt: 1000, date: '2026-11', topic: '🧭 三重身份平衡',
+        title: 'Product Ops × 4岁男孩的妈妈 × 爱冒险的自己',
+        desc: '对外版不主动提妈妈身份，是为了避开职场偏见和保护孩子隐私；但在这里要提醒自己：能同时兼顾带娃、职场、古琴、滑雪和做网页，我的多线程抗压与精力分配能力其实非常强大。'
+      }
+    ]
+  };
+
+  function safeParse(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : JSON.parse(JSON.stringify(fb)); } catch { return JSON.parse(JSON.stringify(fb)); } }
+
+  let pub = safeParse(PUB_LOCAL_KEY, defaultPublic);
+  let pri = safeParse(PRI_LOCAL_KEY, defaultPrivate);
+  let adminPwd = localStorage.getItem(PWD_KEY) || '';
+  let currentPage = 'home';
+  let workFilter = 'all';
+  let lifeFilter = 'all';
+  let pendingOpenComposer = false;
+  let editingTarget = null;
+
+  const $ = id => document.getElementById(id);
+
+  const WORK_META = {
+    maker: { label: '🛠️ Maker 小作品', tone: 'tone-maker', color: 'var(--cyan)' },
+    ops:   { label: '🌉 产品运营',     tone: 'tone-ops',   color: 'var(--indigo)' },
+    ai:    { label: '🤖 AI 工具研究',  tone: 'tone-ai',    color: 'var(--emerald)' }
+  };
+  const LIFE_META = {
+    snow:    { label: '🏂 单板滑雪', tone: 'tone-snow',    color: 'var(--orange)' },
+    guqin:   { label: '🪵 古琴',     tone: 'tone-guqin',   color: 'var(--amber)' },
+    fitness: { label: '💪 健身',     tone: 'tone-fitness', color: 'var(--emerald)' },
+    thought: { label: '🏔️ 冒险随想', tone: 'tone-thought', color: 'var(--violet)' }
+  };
+
+  const CAT_OPTIONS = {
+    work: [
+      { value: 'maker', text: '🛠️ Maker 小作品' },
+      { value: 'ops',   text: '🌉 产品运营' },
+      { value: 'ai',    text: '🤖 AI 工具研究' }
+    ],
+    life: [
+      { value: 'snow',    text: '🏂 单板滑雪' },
+      { value: 'guqin',   text: '🪵 古琴' },
+      { value: 'fitness', text: '💪 健身' },
+      { value: 'thought', text: '🏔️ 冒险与随想' }
+    ],
+    private: [
+      { value: '🧭 三重身份平衡', text: '🧭 三重身份平衡' },
+      { value: '🕳️ 踩坑与原则',   text: '🕳️ 踩坑与原则' },
+      { value: '💼 职业思考草稿', text: '💼 职业思考草稿' },
+      { value: '🤖 AI 联动备忘',  text: '🤖 AI 联动备忘' }
+    ]
+  };
+
+  function setStatus(txt, color = 'var(--muted)') {
+    const el = $('syncStatus');
+    el.textContent = txt;
+    el.style.color = color;
+  }
+
+  function updateAuthUI() {
+    const isAdmin = Boolean(adminPwd);
+    document.body.classList.toggle('is-admin', isAdmin);
+    $('navPrivateBtn').style.display = isAdmin ? 'inline-block' : 'none';
+    $('refreshBtn').style.display = isAdmin ? 'inline-block' : 'none';
+    const btn = $('authBtn');
+    if (isAdmin) {
+      btn.classList.add('unlocked');
+      btn.textContent = '🔓 已解锁';
+    } else {
+      btn.classList.remove('unlocked');
+      btn.textContent = '🔒 主人登录';
+      $('quickComposer').classList.remove('open');
+      if (currentPage === 'private') switchPage('home');
+    }
+  }
+
+  function syncComposerFields() {
+    const target = $('cTarget').value;
+    const catSel = $('cCat');
+    catSel.innerHTML = '';
+    CAT_OPTIONS[target].forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.text;
+      catSel.appendChild(opt);
+    });
+    if (target === 'work') {
+      $('cBadgeLabel').textContent = '状态标签';
+      $('cBadge').placeholder = '例如：已上线 / 实验中';
+      $('cBadge').parentElement.style.display = 'flex';
+      $('cLinkWrap').style.display = 'flex';
+      $('cTitleRow').style.gridTemplateColumns = '2fr 1fr';
+    } else if (target === 'life') {
+      $('cBadgeLabel').textContent = '情绪 / 地点小标签';
+      $('cBadge').placeholder = '例如：美瑛 / 动 · 户外';
+      $('cBadge').parentElement.style.display = 'flex';
+      $('cLinkWrap').style.display = 'none';
+      $('cTitleRow').style.gridTemplateColumns = '1fr';
+    } else {
+      $('cBadge').parentElement.style.display = 'none';
+      $('cLinkWrap').style.display = 'none';
+      $('cTitleRow').style.gridTemplateColumns = '1fr';
+    }
+  }
+  $('cTarget').onchange = syncComposerFields;
+  syncComposerFields();
+
+  function toggleComposer(forceOpen = null) {
+    if (!adminPwd) {
+      pendingOpenComposer = true;
+      openAuth();
+      return;
+    }
+    const panel = $('quickComposer');
+    const willOpen = forceOpen !== null ? forceOpen : !panel.classList.contains('open');
+    if (willOpen) {
+      if (currentPage === 'work' || currentPage === 'life' || currentPage === 'private') {
+        $('cTarget').value = currentPage;
+        syncComposerFields();
+      }
+      panel.classList.add('open');
+      setTimeout(() => $('cTitle').focus(), 80);
+    } else {
+      panel.classList.remove('open');
+    }
+  }
+  $('openComposerBtn').onclick = () => toggleComposer();
+  $('closeComposerBtn').onclick = () => toggleComposer(false);
+  $('cancelComposerBtn').onclick = () => toggleComposer(false);
+
+  // ================= 云端同步逻辑 =================
+  async function workerReq(path, method = 'GET', body = null, usePwd = false) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const headers = {};
+    if (usePwd && adminPwd) headers['X-Password'] = adminPwd;
+    const opts = { method, cache: 'no-store', signal: controller.signal, headers };
+    if (body) {
+      headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    try {
+      const res = await fetch(WORKER_BASE + path, opts);
+      if (res.status === 401) throw new Error('AUTH_FAIL');
+      if (res.status === 500) throw new Error('SERVER_500');
+      if (!res.ok) throw new Error('HTTP_' + res.status);
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function pullPublic() {
+    try {
+      const remote = await workerReq('/homepage', 'GET', null, false);
+      if (remote && remote.projects) return;
+      if (remote && !remote.empty && remote.app === 'homepage') {
+        if (pub.isDefault || (remote.updatedAt || 0) >= (pub.updatedAt || 0)) {
+          if (!remote.profile) remote.profile = defaultPublic.profile;
+          pub = remote;
+          localStorage.setItem(PUB_LOCAL_KEY, JSON.stringify(pub));
+          renderAll();
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function syncAdminAll(pushPub = false, pushPri = false) {
+    if (!adminPwd) return false;
+    setStatus('☁️ 同步中...');
+    try {
+      // 先校验密码并拉取私密区，避免密码错时继续操作
+      const remotePri = await workerReq('/homepage-private', 'GET', null, true);
+      const remotePub = await workerReq('/homepage', 'GET', null, false);
+
+      if (remotePub && remotePub.projects) {
+        setStatus('⚠️ Worker需更新', 'var(--orange)');
+        alert('检测到 Cloudflare Worker 还是旧版代码，请先按步骤更新 Worker 代码再同步哦！');
+        return false;
+      }
+
+      if (pushPub) {
+        delete pub.isDefault;
+        pub.updatedAt = Date.now();
+        localStorage.setItem(PUB_LOCAL_KEY, JSON.stringify(pub));
+        const res = await workerReq('/homepage', 'POST', pub, true);
+        if (res.data && res.data.app === 'homepage') {
+          if (!res.data.profile) res.data.profile = pub.profile;
+          pub = res.data;
+          localStorage.setItem(PUB_LOCAL_KEY, JSON.stringify(pub));
+        }
+      } else {
+        if (remotePub && !remotePub.empty && (pub.isDefault || (remotePub.updatedAt || 0) > (pub.updatedAt || 0))) {
+          if (!remotePub.profile) remotePub.profile = defaultPublic.profile;
+          pub = remotePub;
+          localStorage.setItem(PUB_LOCAL_KEY, JSON.stringify(pub));
+        } else if (!remotePub || remotePub.empty || (pub.updatedAt || 0) > (remotePub.updatedAt || 0)) {
+          delete pub.isDefault;
+          pub.updatedAt = pub.updatedAt || Date.now();
+          const res = await workerReq('/homepage', 'POST', pub, true);
+          if (res.data) pub = res.data;
+          localStorage.setItem(PUB_LOCAL_KEY, JSON.stringify(pub));
+        }
+      }
+
+      if (pushPri) {
+        delete pri.isDefault;
+        pri.updatedAt = Date.now();
+        localStorage.setItem(PRI_LOCAL_KEY, JSON.stringify(pri));
+        const res = await workerReq('/homepage-private', 'POST', pri, true);
+        if (res.data) {
+          pri = res.data;
+          localStorage.setItem(PRI_LOCAL_KEY, JSON.stringify(pri));
+        }
+      } else {
+        if (remotePri && !remotePri.empty && (pri.isDefault || (remotePri.updatedAt || 0) > (pri.updatedAt || 0))) {
+          pri = remotePri;
+          localStorage.setItem(PRI_LOCAL_KEY, JSON.stringify(pri));
+        } else if (!remotePri || remotePri.empty || (pri.updatedAt || 0) > (pri.updatedAt || 0)) {
+          delete pri.isDefault;
+          pri.updatedAt = pri.updatedAt || Date.now();
+          const res = await workerReq('/homepage-private', 'POST', pri, true);
+          if (res.data) pri = res.data;
+          localStorage.setItem(PRI_LOCAL_KEY, JSON.stringify(pri));
+        }
+      }
+
+      renderAll();
+      setStatus('☁️ 已同步 ' + new Date().toTimeString().slice(0, 5), 'var(--emerald)');
+      return true;
+    } catch (e) {
+      if (e.message === 'AUTH_FAIL') {
+        adminPwd = '';
+        localStorage.removeItem(PWD_KEY);
+        updateAuthUI();
+        setStatus('🔒 密码错误', 'var(--rose)');
+        alert('私人密码不对哦，请填写你在 Cloudflare Worker 里设置的密码');
+      } else if (e.message === 'SERVER_500') {
+        setStatus('⚠️ 云端500（检查KV绑定）', 'var(--rose)');
+      } else {
+        setStatus('⚠️ 暂存本地（检查梯子后点🔄）', 'var(--orange)');
+      }
+      return false;
+    }
+  }
+
+  // ================= 渲染与编辑 =================
+  function openEditItemModal(scope, item) {
+    editingTarget = { scope, id: item.id };
+    $('eiTitle').value = item.title || '';
+    $('eiDesc').value = item.desc || '';
+    if (scope === 'work') {
+      $('eiBadgeWrap').style.display = 'block';
+      $('eiBadgeLabel').textContent = '状态标签';
+      $('eiBadge').value = item.status || '';
+      $('eiLinkWrap').style.display = 'block';
+      $('eiLink').value = item.link || '';
+    } else if (scope === 'life') {
+      $('eiBadgeWrap').style.display = 'block';
+      $('eiBadgeLabel').textContent = '小标签';
+      $('eiBadge').value = item.tag || '';
+      $('eiLinkWrap').style.display = 'none';
+    } else {
+      $('eiBadgeWrap').style.display = 'none';
+      $('eiLinkWrap').style.display = 'none';
+    }
+    $('editItemModal').classList.add('open');
+  }
+
+  $('closeEditItemBtn').onclick = () => $('editItemModal').classList.remove('open');
+  $('saveEditItemBtn').onclick = () => {
+    if (!editingTarget) return;
+    const { scope, id } = editingTarget;
+    const title = $('eiTitle').value.trim();
+    const desc = $('eiDesc').value.trim();
+    if (!title || !desc) return alert('标题和内容不能为空');
+
+    if (scope === 'work') {
+      const it = pub.workItems.find(x => x.id === id);
+      if (it) { it.title = title; it.desc = desc; it.status = $('eiBadge').value.trim(); it.link = $('eiLink').value.trim(); it.createdAt = Date.now(); }
+      $('editItemModal').classList.remove('open');
+      renderAll(); syncAdminAll(true, false);
+    } else if (scope === 'life') {
+      const it = pub.lifeItems.find(x => x.id === id);
+      if (it) { it.title = title; it.desc = desc; it.tag = $('eiBadge').value.trim(); it.createdAt = Date.now(); }
+      $('editItemModal').classList.remove('open');
+      renderAll(); syncAdminAll(true, false);
+    } else {
+      const it = pri.privateLogs.find(x => x.id === id);
+      if (it) { it.title = title; it.desc = desc; it.createdAt = Date.now(); }
+      $('editItemModal').classList.remove('open');
+      renderAll(); syncAdminAll(false, true);
+    }
+  };
+
+  function createWorkCard(item) {
+    const meta = WORK_META[item.category] || WORK_META.maker;
+    const card = document.createElement('div');
+    card.className = `b-card ${meta.tone}`;
+
+    const top = document.createElement('div'); top.className = 'card-top';
+    const pill = document.createElement('span'); pill.className = 'cat-pill'; pill.style.color = meta.color; pill.textContent = meta.label;
+    const date = document.createElement('span'); date.className = 'date-text'; date.textContent = item.status || item.date || '';
+    top.appendChild(pill); top.appendChild(date);
+
+    const mid = document.createElement('div');
+    const title = document.createElement('div'); title.className = 'card-title'; title.textContent = item.title;
+    const desc = document.createElement('p'); desc.className = 'card-desc'; desc.textContent = item.desc;
+    mid.appendChild(title); mid.appendChild(desc);
+
+    const foot = document.createElement('div'); foot.className = 'card-foot';
+    const leftFoot = document.createElement('span');
+    if (item.link) {
+      const a = document.createElement('a'); a.className = 'card-link'; a.href = item.link; a.target = '_blank'; a.textContent = '访问链接 ↗';
+      leftFoot.appendChild(a);
+    } else {
+      leftFoot.className = 'tag-muted'; leftFoot.textContent = item.date || '';
+    }
+    const ops = document.createElement('div'); ops.className = 'card-admin-btns';
+    const editBtn = document.createElement('button'); editBtn.className = 'btn-card-op'; editBtn.textContent = '✏️ 编辑';
+    editBtn.onclick = () => openEditItemModal('work', item);
+    const delBtn = document.createElement('button'); delBtn.className = 'btn-card-op del'; delBtn.textContent = '删除';
+    delBtn.onclick = () => {
+      if (!confirm(`删除「${item.title}」吗？`)) return;
+      pub.deletedIds = pub.deletedIds || []; pub.deletedIds.push(item.id);
+      pub.workItems = pub.workItems.filter(x => x.id !== item.id);
+      renderAll(); syncAdminAll(true, false);
+    };
+    ops.appendChild(editBtn); ops.appendChild(delBtn);
+    foot.appendChild(leftFoot); foot.appendChild(ops);
+
+    card.appendChild(top); card.appendChild(mid); card.appendChild(foot);
+    return card;
+  }
+
+  function createLifeCard(item) {
+    const meta = LIFE_META[item.category] || LIFE_META.snow;
+    const card = document.createElement('div');
+    card.className = `b-card ${meta.tone}`;
+
+    const top = document.createElement('div'); top.className = 'card-top';
+    const pill = document.createElement('span'); pill.className = 'cat-pill'; pill.style.color = meta.color; pill.textContent = meta.label;
+    const date = document.createElement('span'); date.className = 'date-text'; date.textContent = item.date || '';
+    top.appendChild(pill); top.appendChild(date);
+
+    const mid = document.createElement('div');
+    const title = document.createElement('div'); title.className = 'card-title'; title.textContent = item.title;
+    const desc = document.createElement('p'); desc.className = 'card-desc'; desc.textContent = item.desc;
+    mid.appendChild(title); mid.appendChild(desc);
+
+    const foot = document.createElement('div'); foot.className = 'card-foot';
+    const tag = document.createElement('span'); tag.style.color = meta.color; tag.style.fontWeight = '600'; tag.textContent = item.tag || '';
+    const ops = document.createElement('div'); ops.className = 'card-admin-btns';
+    const editBtn = document.createElement('button'); editBtn.className = 'btn-card-op'; editBtn.textContent = '✏️ 编辑';
+    editBtn.onclick = () => openEditItemModal('life', item);
+    const delBtn = document.createElement('button'); delBtn.className = 'btn-card-op del'; delBtn.textContent = '删除';
+    delBtn.onclick = () => {
+      if (!confirm(`删除「${item.title}」吗？`)) return;
+      pub.deletedIds = pub.deletedIds || []; pub.deletedIds.push(item.id);
+      pub.lifeItems = pub.lifeItems.filter(x => x.id !== item.id);
+      renderAll(); syncAdminAll(true, false);
+    };
+    ops.appendChild(editBtn); ops.appendChild(delBtn);
+    foot.appendChild(tag); foot.appendChild(ops);
+
+    card.appendChild(top); card.appendChild(mid); card.appendChild(foot);
+    return card;
+  }
+
+  function renderAll() {
+    const p = pub.profile || defaultPublic.profile;
+    $('pName').textContent = p.name;
+    $('pRole').textContent = p.role;
+    $('pBio').textContent = p.bio;
+    $('pNow').textContent = p.nowText;
+    $('pEmail').textContent = p.email;
+
+    const wItems = pub.workItems || [];
+    const lItems = pub.lifeItems || [];
+
+    const hw = $('homeWorkGrid'); hw.innerHTML = '';
+    wItems.slice(0, HOME_LIMIT).forEach(it => hw.appendChild(createWorkCard(it)));
+    $('goWorkBtn').textContent = `查看全部 (${wItems.length} 项) →`;
+
+    const hl = $('homeLifeGrid'); hl.innerHTML = '';
+    lItems.slice(0, HOME_LIMIT).forEach(it => hl.appendChild(createLifeCard(it)));
+    $('goLifeBtn').textContent = `查看全部 (${lItems.length} 项) →`;
+
+    const wFiltered = workFilter === 'all' ? wItems : wItems.filter(x => x.category === workFilter);
+    $('workCount').textContent = `共 ${wFiltered.length} 条记录`;
+    const wf = $('workFullGrid'); wf.innerHTML = '';
+    wFiltered.forEach(it => wf.appendChild(createWorkCard(it)));
+
+    const lFiltered = lifeFilter === 'all' ? lItems : lItems.filter(x => x.category === lifeFilter);
+    $('lifeCount').textContent = `共 ${lFiltered.length} 条记录`;
+    const lf = $('lifeFullGrid'); lf.innerHTML = '';
+    lFiltered.forEach(it => lf.appendChild(createLifeCard(it)));
+
+    const gl = $('goodList'); gl.innerHTML = '';
+    (pri.energyGood || []).forEach((txt, i) => {
+      const li = document.createElement('li');
+      const sp = document.createElement('span'); sp.textContent = txt;
+      const b = document.createElement('button'); b.className = 'btn-card-op del'; b.textContent = '✕';
+      b.onclick = () => {
+        pri.energyGood.splice(i, 1); pri.energyUpdatedAt = Date.now();
+        renderAll(); syncAdminAll(false, true);
+      };
+      li.appendChild(sp); li.appendChild(b); gl.appendChild(li);
+    });
+
+    const bl = $('badList'); bl.innerHTML = '';
+    (pri.energyBad || []).forEach((txt, i) => {
+      const li = document.createElement('li');
+      const sp = document.createElement('span'); sp.textContent = txt;
+      const b = document.createElement('button'); b.className = 'btn-card-op del'; b.textContent = '✕';
+      b.onclick = () => {
+        pri.energyBad.splice(i, 1); pri.energyUpdatedAt = Date.now();
+        renderAll(); syncAdminAll(false, true);
+      };
+      li.appendChild(sp); li.appendChild(b); bl.appendChild(li);
+    });
+
+    const ps = $('privateLogsStack'); ps.innerHTML = '';
+    (pri.privateLogs || []).forEach(log => {
+      const card = document.createElement('div'); card.className = 'b-card tone-private';
+      const top = document.createElement('div'); top.className = 'card-top';
+      const pill = document.createElement('span'); pill.className = 'cat-pill'; pill.style.color = 'var(--amber)'; pill.textContent = log.topic;
+      const date = document.createElement('span'); date.className = 'date-text'; date.textContent = log.date;
+      top.appendChild(pill); top.appendChild(date);
+
+      const title = document.createElement('div'); title.className = 'card-title'; title.textContent = log.title;
+      const desc = document.createElement('p'); desc.className = 'card-desc'; desc.textContent = log.desc;
+      const foot = document.createElement('div'); foot.className = 'card-foot';
+      const ops = document.createElement('div'); ops.className = 'card-admin-btns';
+      const editBtn = document.createElement('button'); editBtn.className = 'btn-card-op'; editBtn.textContent = '✏️ 编辑';
+      editBtn.onclick = () => openEditItemModal('private', log);
+      const del = document.createElement('button'); del.className = 'btn-card-op del'; del.textContent = '删除';
+      del.onclick = () => {
+        if (!confirm('删除这条私密记录？')) return;
+        pri.deletedIds = pri.deletedIds || []; pri.deletedIds.push(log.id);
+        pri.privateLogs = pri.privateLogs.filter(x => x.id !== log.id);
+        renderAll(); syncAdminAll(false, true);
+      };
+      ops.appendChild(editBtn); ops.appendChild(del);
+      foot.appendChild(document.createElement('span')); foot.appendChild(ops);
+      card.appendChild(top); card.appendChild(title); card.appendChild(desc); card.appendChild(foot);
+      ps.appendChild(card);
+    });
+  }
+
+  function switchPage(page) {
+    if (page === 'private' && !adminPwd) return openAuth();
+    currentPage = page;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+    $('page-' + page).classList.add('active');
+    history.replaceState(null, '', '#' + page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => switchPage(b.dataset.page));
+  $('goWorkBtn').onclick = () => switchPage('work');
+  $('goLifeBtn').onclick = () => switchPage('life');
+
+  $('workFilterBar').querySelectorAll('.filter-chip').forEach(c => {
+    c.onclick = () => {
+      workFilter = c.dataset.cat;
+      $('workFilterBar').querySelectorAll('.filter-chip').forEach(x => x.classList.toggle('active', x === c));
+      renderAll();
+    };
+  });
+  $('lifeFilterBar').querySelectorAll('.filter-chip').forEach(c => {
+    c.onclick = () => {
+      lifeFilter = c.dataset.cat;
+      $('lifeFilterBar').querySelectorAll('.filter-chip').forEach(x => x.classList.toggle('active', x === c));
+      renderAll();
+    };
+  });
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  $('publishBtn').onclick = () => {
+    const target = $('cTarget').value;
+    const cat = $('cCat').value;
+    const badge = $('cBadge').value.trim();
+    const title = $('cTitle').value.trim();
+    const link = $('cLink').value.trim();
+    const desc = $('cDesc').value.trim();
+    if (!title || !desc) return alert('请填写标题和详细内容哦');
+
+    if (target === 'work') {
+      pub.workItems.unshift({ id: 'w_' + Date.now(), createdAt: Date.now(), date: todayStr(), category: cat, title, status: badge || '记录', desc, link });
+      renderAll(); syncAdminAll(true, false);
+    } else if (target === 'life') {
+      pub.lifeItems.unshift({ id: 'l_' + Date.now(), createdAt: Date.now(), date: todayStr(), category: cat, title, tag: badge, desc });
+      renderAll(); syncAdminAll(true, false);
+    } else {
+      pri.privateLogs.unshift({ id: 'pr_' + Date.now(), createdAt: Date.now(), date: todayStr(), topic: cat, title, desc });
+      renderAll(); syncAdminAll(false, true);
+    }
+
+    $('cTitle').value = ''; $('cBadge').value = ''; $('cLink').value = ''; $('cDesc').value = '';
+    $('quickComposer').classList.remove('open');
+  };
+
+  $('addGoodBtn').onclick = () => {
+    const v = $('inGood').value.trim(); if (!v) return;
+    pri.energyGood.push(v); pri.energyUpdatedAt = Date.now();
+    $('inGood').value = ''; renderAll(); syncAdminAll(false, true);
+  };
+  $('addBadBtn').onclick = () => {
+    const v = $('inBad').value.trim(); if (!v) return;
+    pri.energyBad.push(v); pri.energyUpdatedAt = Date.now();
+    $('inBad').value = ''; renderAll(); syncAdminAll(false, true);
+  };
+
+  $('editProfileBtn').onclick = () => {
+    const p = pub.profile || defaultPublic.profile;
+    $('edName').value = p.name; $('edRole').value = p.role;
+    $('edBio').value = p.bio; $('edNow').value = p.nowText; $('edEmail').value = p.email;
+    $('profileModal').classList.add('open');
+  };
+  $('closeProfileBtn').onclick = () => $('profileModal').classList.remove('open');
+  $('saveProfileBtn').onclick = () => {
+    pub.profile = {
+      name: $('edName').value.trim() || '我的主页',
+      role: $('edRole').value.trim(),
+      bio: $('edBio').value.trim(),
+      nowText: $('edNow').value.trim(),
+      email: $('edEmail').value.trim()
+    };
+    pub.profileUpdatedAt = Date.now();
+    $('profileModal').classList.remove('open');
+    renderAll(); syncAdminAll(true, false);
+  };
+
+  function openAuth() {
+    $('cfgPwd').value = adminPwd;
+    $('logoutBtn').style.display = adminPwd ? 'inline-block' : 'none';
+    $('authModal').classList.add('open');
+    setTimeout(() => $('cfgPwd').focus(), 100);
+  }
+  $('authBtn').onclick = () => { pendingOpenComposer = false; openAuth(); };
+  $('closeAuthBtn').onclick = () => { pendingOpenComposer = false; $('authModal').classList.remove('open'); };
+  $('confirmAuthBtn').onclick = async () => {
+    const pwd = $('cfgPwd').value.trim();
+    if (!pwd) return alert('请输入私人密码');
+    adminPwd = pwd;
+    localStorage.setItem(PWD_KEY, adminPwd);
+    $('authModal').classList.remove('open');
+    updateAuthUI();
+    const ok = await syncAdminAll(false, false);
+    if (ok && pendingOpenComposer) {
+      pendingOpenComposer = false;
+      toggleComposer(true);
+    }
+  };
+  $('cfgPwd').onkeydown = (e) => { if (e.key === 'Enter') $('confirmAuthBtn').click(); };
+  $('logoutBtn').onclick = () => {
+    adminPwd = '';
+    localStorage.removeItem(PWD_KEY);
+    $('authModal').classList.remove('open');
+    updateAuthUI();
+    setStatus('');
+  };
+
+  $('refreshBtn').onclick = () => syncAdminAll(false, false);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (adminPwd) syncAdminAll(false, false);
+      else pullPublic();
+    }
+  });
+
+  $('exportBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify({ pub, pri }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `homepage-backup-${todayStr()}.json`;
+    a.click();
+  };
+  $('importBtn').onclick = () => $('importFile').click();
+  $('importFile').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if (d.pub && d.pub.workItems) pub = d.pub;
+        if (d.pri && d.pri.privateLogs) pri = d.pri;
+        renderAll();
+        if (adminPwd) syncAdminAll(true, true);
+        $('authModal').classList.remove('open');
+        alert('导入成功！');
+      } catch { alert('文件格式不对'); }
+    };
+    reader.readAsText(file);
+  };
+
+  renderAll();
+  updateAuthUI();
+  if (location.hash === '#work') switchPage('work');
+  else if (location.hash === '#life') switchPage('life');
+  else if (location.hash === '#private' && adminPwd) switchPage('private');
+
+  if (adminPwd) syncAdminAll(false, false);
+  else pullPublic();
+</script>
+</body>
+</html>
